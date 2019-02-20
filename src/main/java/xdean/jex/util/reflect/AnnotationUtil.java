@@ -112,6 +112,41 @@ public class AnnotationUtil {
     memberValues.put(key, newValue);
     return oldValue;
   }
+  
+    /**
+   *  Changes the annotation value from the given map.
+   * @param annotation
+   * @param valueMap
+   */
+  @SuppressWarnings("unchecked")
+  public static void changeAnnotationFromMap(Annotation annotation, Map<String, Object> valueMap) {
+    if(CollectionUtils.isEmpty(valueMap))
+      return;
+
+    Object handler = Proxy.getInvocationHandler(annotation);
+    Field f;
+    try {
+      f = handler.getClass().getDeclaredField("memberValues");
+    } catch (NoSuchFieldException | SecurityException e) {
+      throw new IllegalStateException(e);
+    }
+    f.setAccessible(true);
+    Map<String, Object> memberValues;
+    try {
+      memberValues = (Map<String, Object>) f.get(handler);
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+      throw new IllegalStateException(e);
+    }
+
+
+    for(Map.Entry<String, Object> entry : valueMap.entrySet()){
+      Object oldValue = memberValues.get(entry.getKey());
+      if (oldValue == null || oldValue.getClass() != entry.getValue().getClass()) {
+        throw new IllegalArgumentException();
+      }
+      memberValues.put(entry.getKey(), entry.getValue());
+    }
+  }
 
   /**
    * Add annotation to Executable(Method or Constructor)<br>
